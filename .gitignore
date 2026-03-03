@@ -1,0 +1,23 @@
+# Environment
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+env/
+.venv
+
+# PyTorch Checkpoints and Models
+*.pth
+*.pt
+best_model.pth
+
+# Logs/MLflow
+mlruns/
+*.log
+
+# Data
+Data/
+*.parquet
+*.csv
+region_1.geojson

@@ -1,0 +1,31 @@
+experiment_name: "BiLSTM_Trajectory_Region_1"
+run_name: "base_bilstm_run"
+random_seed: 42
+
+data:
+  dataset_path: "F:/PyTorch_GPU/vessel_trajectory_prediction/Data/region_1_q1_merged_renamed.parquet"
+  feature_columns: ["Longitude", "Latitude", "SOG", "COG"]
+  label_columns: ["Longitude", "Latitude"]
+  time_step: 10          # Number of historical points to look back (obs_len)
+  predict_step: 2        # Number of future points to predict (pre_len)
+  train_split: 0.7
+  valid_split: 0.15
+  test_split: 0.15
+
+model:
+  type: "bilstm"         # "lstm" or "bilstm"
+  hidden_size: 128
+  lstm_layers: 2
+  dropout_rate: 0.5
+
+training:
+  batch_size: 64
+  learning_rate: 0.001
+  epochs: 100
+  patience: 20           # Early stopping patience
+  use_cuda: true
+  resume_checkpoint: ""  # Set path (e.g., 'best_model.pth') to resume
+
+logging:
+  mlflow_tracking_uri: "./mlruns"
+  log_frequency: 100     # Log metrics every N batches
