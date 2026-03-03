@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from tqdm import tqdm
+import numpy as np
 from ..utils.metrics import get_all_metrics
 
 class Trainer:
@@ -29,7 +30,9 @@ class Trainer:
             train_loss_total = 0.0
             
             pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{self.epochs} [Train]")
+            batches = 0
             for batch_idx, (x, y) in enumerate(pbar):
+                batches += 1
                 x, y = x.to(self.device), y.to(self.device)
                 
                 self.optimizer.zero_grad()
@@ -78,7 +81,7 @@ class Trainer:
                 if global_step % self.config['logging']['log_frequency'] == 0:
                     self.logger.log_metrics({"train_step_loss": loss.item()}, step=global_step)
             
-            avg_train_loss = train_loss_total / len(train_loader)
+            avg_train_loss = train_loss_total / batches if batches > 0 else 0
             
             # --- Validation phase ---
             val_loss, val_metrics = self.evaluate(val_loader)
@@ -112,9 +115,11 @@ class Trainer:
         val_loss = 0.0
         all_preds = []
         all_trues = []
+        batches = 0
         
         with torch.no_grad():
             for x, y in val_loader:
+                batches += 1
                 x, y = x.to(self.device), y.to(self.device)
                 
                 outputs = self.model(x)
@@ -129,10 +134,13 @@ class Trainer:
                 all_preds.append(outputs_for_loss.cpu().numpy())
                 all_trues.append(y.cpu().numpy())
                 
-        avg_val_loss = val_loss / len(val_loader)
+        avg_val_loss = val_loss / batches if batches > 0 else 0
         
-        preds_concat = np.concatenate(all_preds, axis=0)
-        trues_concat = np.concatenate(all_trues, axis=0)
-        metrics = get_all_metrics(trues_concat, preds_concat)
+        if len(all_preds) > 0:
+            preds_concat = np.concatenate(all_preds, axis=0)
+            trues_concat = np.concatenate(all_trues, axis=0)
+            metrics = get_all_metrics(trues_concat, preds_concat)
+        else:
+            metrics = {"ade": 0.0, "fde": 0.0, "mse": 0.0, "rmse": 0.0, "mae": 0.0, "mape": 0.0, "smape": 0.0}
         
         return avg_val_loss, metrics
